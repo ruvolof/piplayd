@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from Tkinter import *
-import sys, getopt , os, thread, socket, errno
+import sys, getopt , os, threading, socket, errno
 import tkSnack as sndsys
 
 MSGBUF = 256
@@ -97,7 +97,9 @@ def main():
     sndobj = sndsys.Sound()
 
     # Starting server thread
-    thread.start_new_thread(runServer, (port, docroot, sndobj))
+    server = threading.Thread(target=runServer, args=(port, docroot, sndobj))
+    server.daemon = True
+    server.start()
     
     mainloop()
 
