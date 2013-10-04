@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from Tkinter import *
-import sys, getopt , os, thread, socket
+import sys, getopt , os, thread, socket, errno
 import tkSnack as sndsys
 
 MSGBUF = 256
@@ -31,9 +31,16 @@ def runServer(port, docroot, sndobj):
 
 def playSong(sndobj, path):
     sndobj.flush()
-    sndobj.read(path)
+
+    try:
+        sndobj.read(path)
+    except Exception, err:
+        print "Error %s" % (err)
+        return 1
+    
     sndobj.play()
     print "Now playing: %s" % (path)
+    return 0
 
 def main():
     # Catching command line options
