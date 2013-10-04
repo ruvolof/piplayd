@@ -4,6 +4,12 @@ from Tkinter import *
 import sys, getopt , os
 import tkSnack as sndsys
 
+def playSong(sndobj, path):
+    sndobj.flush()
+    sndobj.read(path)
+    sndobj.play()
+    print "Now playing: %s" % (path)
+
 def main():
     # Catching command line options
     try:
@@ -25,8 +31,6 @@ def main():
         else:
             assert False, "Unhandled option"
 
-    print "%d %s" % (port, docroot)
-
     # Creating Tk window for Snack
     win = Tk()
 
@@ -37,15 +41,9 @@ def main():
     win.withdraw()
 
     # Initiliazing Sound object
-    mp3 = sndsys.Sound()
+    sndobj = sndsys.Sound()
 
-    def playSong(path):
-        mp3.flush()
-        mp3.read(path)
-        mp3.play()
-        print "Now playing: %s" % (path)
-
-    playSong(args[0])
+    playSong(sndobj, args[0])
 
     mainloop()
 
