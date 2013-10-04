@@ -19,15 +19,29 @@ def runServer(port, docroot, sndobj):
     print "Server listening on port %d." % (port)
     print "It's serving the folder %s." % (docroot)
 
-    while True:
-        clientsocket, address = serversocket.accept()
-        command, msg = clientsocket.recv(MSGBUF).rstrip().split(' ', 1)
+    accepted = True
+    while accepted:
+        try:
+            clientsocket, address = serversocket.accept()
+        except Exception, err:
+            accepted = False
+            print "Error %s" % (err)
         
-        # Checking command
-        if command == "PLAY":
-            playSong(sndobj, msg)
-        else:
-            print "Unrecognized command"
+        if accepted:
+            received = True
+            while received:
+                try:
+                    command, msg = clientsocket.recv(MSGBUF).rstrip().split(' ', 1)
+                except Exception, err:
+                    received = False
+                    print "Error %s" % (err)
+            
+                # Checking command
+                if received:
+                    if command == "PLAY":
+                        playSong(sndobj, msg)
+                    else:
+                        print "Unrecognized command"
 
 def playSong(sndobj, path):
     sndobj.flush()
