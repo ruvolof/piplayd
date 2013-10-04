@@ -31,15 +31,22 @@ def runServer(port, docroot, sndobj):
             received = True
             while received:
                 try:
-                    command, msg = clientsocket.recv(MSGBUF).rstrip().split(' ', 1)
+                    command = clientsocket.recv(MSGBUF)
                 except Exception, err:
                     received = False
                     print "Error %s" % (err)
+
+                if command == '':
+                    received = False
+                    print "Client disconnected."
             
                 # Checking command
                 if received:
-                    if command == "PLAY":
-                        playSong(sndobj, msg)
+                    command = command.rstrip()
+
+                    if command.find('PLAY') == 0:
+                        song = command.split(' ', 1)[1]
+                        playSong(sndobj, song)
                     else:
                         print "Unrecognized command"
 
