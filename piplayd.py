@@ -1,8 +1,33 @@
 #!/usr/bin/python
 
 from Tkinter import *
-import sys, getopt , os
+import sys, getopt , os, thread, socket
 import tkSnack as sndsys
+
+MSGBUF = 256
+
+def runServer(port, docroot, sndobj):
+    # Changing DocRoot
+    if docroot != os.getcwd():
+        os.chdir(docroot)
+    
+    # Opening socket
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serversocket.bind(('', port))
+    serversocket.listen(1)
+
+    print "Server listening on port %d." % (port)
+    print "It's serving the folder %s." % (docroot)
+
+    while True:
+        clientsocket, address = serversocket.accept()
+        command, msg = clientsocket.recv(MSGBUF).rstrip().split(' ', 1)
+        
+        # Checking command
+        if command == "PLAY":
+            playSong(sndobj, msg)
+        else:
+            print "Unrecognized command"
 
 def playSong(sndobj, path):
     sndobj.flush()
@@ -43,8 +68,9 @@ def main():
     # Initiliazing Sound object
     sndobj = sndsys.Sound()
 
-    playSong(sndobj, args[0])
-
+    # Starting server thread
+    thread.start_new_thread(runServer, (port, docroot, sndobj))
+    
     mainloop()
 
 if __name__ == "__main__":
