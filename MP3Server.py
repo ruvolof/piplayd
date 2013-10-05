@@ -1,4 +1,5 @@
 import SocketServer
+import socket
 import os
 
 class MP3Server (SocketServer.TCPServer):
@@ -23,9 +24,12 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
     # Constants
     MSGBUFF = 256
+
     MSG_PLAY = 'PLAY'
     MSG_AYPP = 'AREYOUPIPLAY'
-    MSG_PAUSE= 'PAUSE'
+    MSG_PAUSE = 'PAUSE'
+    MSG_RESUME = 'RESUME'
+
     CODE_OK = '200 OK'
     CODE_IMPP = '220 YES I AM'
     CODE_NF = '404 NOT FOUND'
@@ -33,6 +37,8 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED'
 
     def handle(self):
+        print "Got connection from ", self.client_address
+
         command = 'dummy'
         # This is because recv returns an empty line on error
         while command != '':
@@ -46,13 +52,21 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
                 if command.find(self.MSG_PLAY) == 0:
                     song = command.split(' ', 1)[1]
-                    if self.playSong(snd, song) == 0:
+                    if not self.startSong(snd, song):
                         self.request.send(self.CODE_OK)
                     else:
                         self.request.send(self.CODE_NF)
 
                 elif command.find(self.MSG_PAUSE) == 0:
-                    if self.pauseSong(snd) == 0:
+                    try:
+                        sndobj.pause()
+                        self.request.send(self.CODE_OK)
+                    else:
+                        self.request.send(self.CODE_ERR)
+
+                elif command.find(self.MSG_RESUME) == 0:
+                    try:
+                        sndobj.play()
                         self.request.send(self.CODE_OK)
                     else:
                         self.request.send(self.CODE_ERR)
@@ -64,24 +78,23 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     print "Unknown command: %s" % (command)
                     self.request.send(self.CODE_UNKNOWN)
 
+    def finish(self):
+        self.request.shutdown(socket.SHUT_RDWR)
+        self.request.close()
+
     
-    def playSong(self, sndobj, path):
+    def startSong(self, sndobj, path):
         sndobj.flush()
 
-        try:
-            sndobj.read(path)
-        except Exception, err:
-            print "Error %s" % (err)
-            return 1
+        if os.path.isfile(path):
+            try:
+                sndobj.read(path)
+            except Exception, err:
+                print "Error %s" % (err)
+                return 1
+        else:
+            return 2
         
         sndobj.play()
         print "Now playing: %s" % (path)
-        return 0
-
-    def pauseSong(self, sndobj):
-        try:
-            sndobj.pause()
-        except Exception, err:
-            print "Error %s" % (err)
-            return 1
         return 0
