@@ -3,6 +3,8 @@ import socket
 import os
 
 class MP3Server (SocketServer.TCPServer):
+
+    ServedFiles = []
     
     def __init__(self, server_address, RequestHandlerClass, SoundObj, DocRoot):
         SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
@@ -13,6 +15,13 @@ class MP3Server (SocketServer.TCPServer):
 
         # Changing to DocRoot directory
         os.chdir(self.DocRoot)
+
+        # Loading files
+        for dir, subdirs, files in os.walk(self.DocRoot):
+            for f in files:
+                self.ServedFiles.append(os.path.join(dir, f))
+
+        self.ServedFiles.sort()
     
     # Overriding method to add some print line
     def serve_forever(self, poll_interval=0.5):
@@ -29,6 +38,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_AYPP = 'AREYOUPIPLAY'
     MSG_PAUSE = 'PAUSE'
     MSG_RESUME = 'RESUME'
+    MSG_LIST = 'LIST'
 
     CODE_OK = '200 OK'
     CODE_IMPP = '220 YES I AM'
@@ -46,6 +56,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
             command = self.data
             snd = self.server.SoundObj
+            files = self.server.ServedFiles
             
             # Parsing command
             if command != '':
@@ -76,6 +87,9 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                 elif command.find(self.MSG_AYPP) == 0:
                     self.request.send(self.CODE_IMPP)
 
+                elif command.find(self.MSG_LIST) == 0:
+                    self.listServedFiles(files)
+
                 else:
                     print "Unknown command: %s" % (command)
                     self.request.send(self.CODE_UNKNOWN)
@@ -100,3 +114,9 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         sndobj.play()
         print "Now playing: %s" % (path)
         return 0
+
+    def listServedFiles(self, FileList):
+        i = 0
+        for f in FileList:
+            print i, " - ", f
+            i += 1
