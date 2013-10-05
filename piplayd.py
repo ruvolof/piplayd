@@ -47,12 +47,13 @@ def main():
 
     # Starting server thread
     server = MP3Server.MP3Server(('', port), MP3Server.PlayerHandler, sndobj, docroot)
-    server_thread = threading.Thread(target=server.serve_forever())
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
 
     # Dummy function to interrupt mainloop in order to handle signal
     int_for_signal(win)
 
-    Tkinter.mainloop()
+    win.mainloop()
 
 if __name__ == "__main__":
     main()
