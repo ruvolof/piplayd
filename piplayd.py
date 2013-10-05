@@ -62,6 +62,9 @@ def playSong(sndobj, path):
     sndobj.play()
     print "Now playing: %s" % (path)
     return 0
+    
+def dummy(tk):
+	tk.after(1000, dummy, tk)
 
 def main():
     # Catching command line options
@@ -92,6 +95,8 @@ def main():
 
     # Withdrawing Tk window, we don't need it after initializeSnack()
     win.withdraw()
+    
+    dummy(win)
 
     # Initiliazing Sound object
     sndobj = sndsys.Sound()
