@@ -5,9 +5,9 @@ import sys
 import getopt
 import os
 import threading
-import errno
 import tkSnack
 import MP3Server
+import signal
 
 def int_for_signal(tkObject):
 	tkObject.after(1000, int_for_signal, tkObject)
@@ -32,6 +32,13 @@ def main():
             docroot = a
         else:
             assert False, "Unhandled option"
+
+    # Registering signal handler
+    def sigint_handler(signal, frame):
+        server.shutdown()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sigint_handler)
 
     # Creating Tk window for Snack
     win = Tkinter.Tk()
