@@ -26,10 +26,11 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_PLAY = 'PLAY'
     MSG_AYPP = 'AREYOUPIPLAY'
     MSG_PAUSE= 'PAUSE'
-    CODE_OK = '200'
-    CODE_IMPP = '220'
-    CODE_NF = '404'
-    CODE_ERR = '500'
+    CODE_OK = '200 OK'
+    CODE_IMPP = '220 YES I AM'
+    CODE_NF = '404 NOT FOUND'
+    CODE_ERR = '500 ERROR'
+    CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED'
 
     def handle(self):
         command = 'dummy'
@@ -44,23 +45,24 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
             if command != '':
 
                 if command.find(self.MSG_PLAY) == 0:
-                    song = self.command.split(' ', 1)[1]
-                    if self.playSong(snd, song) == 0
+                    song = command.split(' ', 1)[1]
+                    if self.playSong(snd, song) == 0:
                         self.request.send(self.CODE_OK)
                     else:
                         self.request.send(self.CODE_NF)
 
                 elif command.find(self.MSG_PAUSE) == 0:
-                    if pauseSong(snd) == 0:
-                        self.request.send(MSG_OK)
+                    if self.pauseSong(snd) == 0:
+                        self.request.send(self.CODE_OK)
                     else:
-                        self.request.send(MSG_ERR)
+                        self.request.send(self.CODE_ERR)
 
                 elif command.find(self.MSG_AYPP) == 0:
                     self.request.send(self.CODE_IMPP)
 
                 else:
-                    print "Unknown command: %s" % (self.command)
+                    print "Unknown command: %s" % (command)
+                    self.request.send(self.CODE_UNKNOWN)
 
     
     def playSong(self, sndobj, path):
