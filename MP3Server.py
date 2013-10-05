@@ -59,16 +59,18 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
                 elif command.find(self.MSG_PAUSE) == 0:
                     try:
-                        sndobj.pause()
+                        snd.pause()
                         self.request.send(self.CODE_OK)
-                    else:
+                    except Exception, err:
+                        print "Errore ", err
                         self.request.send(self.CODE_ERR)
 
                 elif command.find(self.MSG_RESUME) == 0:
                     try:
-                        sndobj.play()
+                        snd.play()
                         self.request.send(self.CODE_OK)
-                    else:
+                    except Exception, err:
+                        print "Errore ", err
                         self.request.send(self.CODE_ERR)
 
                 elif command.find(self.MSG_AYPP) == 0:
