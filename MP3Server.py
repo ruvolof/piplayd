@@ -25,9 +25,11 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSGBUFF = 256
     MSG_PLAY = 'PLAY'
     MSG_AYPP = 'AREYOUPIPLAY'
+    MSG_PAUSE= 'PAUSE'
     CODE_OK = '200'
     CODE_IMPP = '220'
-    CODE_NO = '400'
+    CODE_NF = '404'
+    CODE_ERR = '500'
 
     def handle(self):
         command = 'dummy'
@@ -46,7 +48,13 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     if self.playSong(snd, song) == 0
                         self.request.send(self.CODE_OK)
                     else:
-                        self.request.send(self.CODE_NO)
+                        self.request.send(self.CODE_NF)
+
+                elif command.find(self.MSG_PAUSE) == 0:
+                    if pauseSong(snd) == 0:
+                        self.request.send(MSG_OK)
+                    else:
+                        self.request.send(MSG_ERR)
 
                 elif command.find(self.MSG_AYPP) == 0:
                     self.request.send(self.CODE_IMPP)
@@ -67,4 +75,11 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         sndobj.play()
         print "Now playing: %s" % (path)
         return 0
-            
+
+    def pauseSong(self, sndobj):
+        try:
+            sndobj.pause()
+        except Exception, err:
+            print "Error %s" % (err)
+            return 1
+        return 0
