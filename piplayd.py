@@ -63,8 +63,8 @@ def playSong(sndobj, path):
     print "Now playing: %s" % (path)
     return 0
     
-def dummy(tk):
-	tk.after(1000, dummy, tk)
+def int_for_signal(tkObject):
+	tkObject.after(1000, int_for_signal, tkObject)
 
 def main():
     # Catching command line options
@@ -74,7 +74,7 @@ def main():
         print str(err)
         sys.exit(2)
 
-    # default values
+    # Default values 
     port = 9580
     docroot = os.getcwd()
 
@@ -96,8 +96,6 @@ def main():
     # Withdrawing Tk window, we don't need it after initializeSnack()
     win.withdraw()
     
-    dummy(win)
-
     # Initiliazing Sound object
     sndobj = sndsys.Sound()
 
@@ -106,6 +104,9 @@ def main():
     server.daemon = True
     server.start()
     
+    # Dummy function to interrupt mainloop in order to handle signal
+    int_for_signal(win)
+
     mainloop()
 
 if __name__ == "__main__":
