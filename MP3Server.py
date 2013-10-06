@@ -51,10 +51,11 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_SEARCH = 'SEARCH'
 
     CODE_OK = '200 OK\n'
-    CODE_IMPP = '220 YES I AM\n'
+    CODE_LISTSUCC = '210 LIST'
+    CODE_IMPP = '250 YES I AM\n'
     CODE_NF = '404 NOT FOUND\n'
     CODE_NOKEY = '420 NO KEY SPECIFIED\n'
-    CODE_ERR = '500 ERROR\n'
+    CODE_ERR = '500 INTERNAL ERROR\n'
     CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED\n'
 
     def handle(self):
@@ -194,7 +195,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         return 0
     
     def createListMsg(self):
-        msg = self.CODE_OK
+        msg = self.CODE_LISTSUCC
         i = 0
         if self.ActiveList != []:
             for f in self.ActiveList:
