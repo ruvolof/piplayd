@@ -5,6 +5,7 @@ import os
 class MP3Server (SocketServer.TCPServer):
 
     ServedFiles = []
+    AcceptedExtension = frozenset(['mp3', 'wav', 'ogg'])
     
     def __init__(self, server_address, RequestHandlerClass, SoundObj, DocRoot):
         SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
@@ -29,7 +30,9 @@ class MP3Server (SocketServer.TCPServer):
         self.ServedFiles = []
         for dir, subdir, files in os.walk(self.DocRoot):
             for f in files:
-                self.ServedFiles.append(os.path.join(dir, f))
+                ext = f.rsplit('.', 1)[1]
+                if ext in self.AcceptedExtension:
+                    self.ServedFiles.append(os.path.join(dir, f))
 
         self.ServedFiles.sort()
 
