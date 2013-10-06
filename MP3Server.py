@@ -51,7 +51,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_SEARCH = 'SEARCH'
 
     CODE_OK = '200 OK\n'
-    CODE_LISTSUCC = '210 LIST'
+    CODE_LISTSUCC = '210 LIST\n'
     CODE_IMPP = '250 YES I AM\n'
     CODE_NF = '404 NOT FOUND\n'
     CODE_NOKEY = '420 NO KEY SPECIFIED\n'
