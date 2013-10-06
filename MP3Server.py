@@ -152,8 +152,6 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         except Exception:
             directory = '.'
 
-        print "Listing ", directory
-
         # Flushing old entries
         self.flushActive()
 
@@ -178,6 +176,9 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         except Exception:
             print "SEARCH: No key specified"
             return 1
+
+        # Flushing old entries
+        self.flushActive()
 
         self.server.refreshServed()
 
