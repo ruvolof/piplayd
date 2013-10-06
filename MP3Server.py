@@ -17,11 +17,7 @@ class MP3Server (SocketServer.TCPServer):
         os.chdir(self.DocRoot)
 
         # Loading files
-        for dir, subdirs, files in os.walk(self.DocRoot):
-            for f in files:
-                self.ServedFiles.append(os.path.join(dir, f))
-
-        self.ServedFiles.sort()
+        self.refreshServed()
     
     # Overriding method to add some print line
     def serve_forever(self, poll_interval=0.5):
@@ -29,7 +25,19 @@ class MP3Server (SocketServer.TCPServer):
         print "It's serving the folder %s." % (self.DocRoot)
         SocketServer.TCPServer.serve_forever(self, poll_interval=0.5)
 
+    def refreshServed(self):
+        for dir, subdir, files in os.walk(self.DocRoot):
+            for f in files:
+                self.ServedFiles.append(os.path.join(dir, f))
+
+        self.ServedFiles.sort()
+
 class PlayerHandler (SocketServer.BaseRequestHandler):
+
+    # Active list for easy retrieval
+    Dirs = []
+    Files = []
+    ActiveList = []
 
     # Constants
     MSGBUFF = 256
@@ -49,55 +57,46 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     def handle(self):
         print "Got connection from ", self.client_address
 
-        command = 'dummy'
-        # This is because recv returns an empty line on error
-        while command != '':
-            self.data = self.request.recv(self.MSGBUFF).strip()
+        self.data = self.request.recv(self.MSGBUFF).strip()
 
-            command = self.data
-            snd = self.server.SoundObj
-            files = self.server.ServedFiles
-            
-            # Parsing command
-            if command != '':
+        command = self.data
+        snd = self.server.SoundObj
+        
+        # Parsing command
+        if command != '':
 
-                if command.find(self.MSG_PLAY) == 0:
-                    song = command.split(' ', 1)[1]
-                    if not self.startSong(snd, song):
-                        self.request.send(self.CODE_OK)
-                    else:
-                        self.request.send(self.CODE_NF)
-
-                elif command.find(self.MSG_PAUSE) == 0:
-                    try:
-                        snd.pause()
-                        self.request.send(self.CODE_OK)
-                    except Exception, err:
-                        print "Errore ", err
-                        self.request.send(self.CODE_ERR)
-
-                elif command.find(self.MSG_RESUME) == 0:
-                    try:
-                        snd.play()
-                        self.request.send(self.CODE_OK)
-                    except Exception, err:
-                        print "Errore ", err
-                        self.request.send(self.CODE_ERR)
-
-                elif command.find(self.MSG_AYPP) == 0:
-                    self.request.send(self.CODE_IMPP)
-
-                elif command.find(self.MSG_LIST) == 0:
-                    self.listServedFiles(files)
-
+            if command.find(self.MSG_PLAY) == 0:
+                song = command.split(' ', 1)[1]
+                if not self.startSong(snd, song):
+                    self.request.send(self.CODE_OK)
                 else:
-                    print "Unknown command: %s" % (command)
-                    self.request.send(self.CODE_UNKNOWN)
+                    self.request.send(self.CODE_NF)
 
-    def finish(self):
-        self.request.shutdown(socket.SHUT_RDWR)
-        self.request.close()
+            elif command.find(self.MSG_PAUSE) == 0:
+                try:
+                    snd.pause()
+                    self.request.send(self.CODE_OK)
+                except Exception, err:
+                    print "Errore ", err
+                    self.request.send(self.CODE_ERR)
 
+            elif command.find(self.MSG_RESUME) == 0:
+                try:
+                    snd.play()
+                    self.request.send(self.CODE_OK)
+                except Exception, err:
+                    print "Errore ", err
+                    self.request.send(self.CODE_ERR)
+
+            elif command.find(self.MSG_AYPP) == 0:
+                self.request.send(self.CODE_IMPP)
+
+            elif command.find(self.MSG_LIST) == 0:
+                self.setActiveDir(command)
+
+            else:
+                print "Unknown command: %s" % (command)
+                self.request.send(self.CODE_UNKNOWN)
     
     def startSong(self, sndobj, path):
         sndobj.flush()
@@ -115,8 +114,34 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         print "Now playing: %s" % (path)
         return 0
 
-    def listServedFiles(self, FileList):
+    def setActiveDir(self, command):
+        # Check for argument
+        try:
+            directory =  os.path.join('.', command.split(' ', 1)[1])
+        except Exception:
+            directory = '.'
+
+        print "Listing ", directory
+
+        # Flushing old entries
+        self.flushActive()
+
+        for entry in os.listdir(directory):
+            if os.path.isfile(os.path.join(directory, entry)):
+                self.Files.append(os.path.join(directory, entry))
+            elif os.path.isdir(os.path.join(directory, entry)):
+                self.Dirs.append(os.path.join(directory, entry))
+
+        self.Dirs.sort()
+        self.Files.sort()
+        self.ActiveList = self.Dirs + self.Files        
+
         i = 0
-        for f in FileList:
-            print i, " - ", f
+        for entry in self.ActiveList:
+            print i, " - ", entry
             i += 1
+    
+    def flushActive(self):
+        self.Dirs = []
+        self.Files = []
+        self.ActiveList = []
