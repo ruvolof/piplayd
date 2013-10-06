@@ -56,62 +56,80 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
     def handle(self):
         print "Got connection from ", self.client_address
-
-        self.data = self.request.recv(self.MSGBUFF).strip()
-
-        command = self.data
-        snd = self.server.SoundObj
+        command = 'notempty'
         
-        # Parsing command
-        if command != '':
+        # socket.recv returns empty string on error
+        while command != '':
+            self.data = self.request.recv(self.MSGBUFF).strip()
 
-            if command.find(self.MSG_PLAY) == 0:
-                song = command.split(' ', 1)[1]
-                if not self.startSong(snd, song):
-                    self.request.send(self.CODE_OK)
+            command = self.data
+            snd = self.server.SoundObj
+            
+            # Parsing command
+            if command != '':
+
+                if command.find(self.MSG_PLAY) == 0:
+                    if not self.startSong(snd, command):
+                        self.request.send(self.CODE_OK)
+                    else:
+                        self.request.send(self.CODE_NF)
+
+                elif command.find(self.MSG_PAUSE) == 0:
+                    try:
+                        snd.pause()
+                        self.request.send(self.CODE_OK)
+                    except Exception, err:
+                        print "Errore ", err
+                        self.request.send(self.CODE_ERR)
+
+                elif command.find(self.MSG_RESUME) == 0:
+                    try:
+                        snd.play()
+                        self.request.send(self.CODE_OK)
+                    except Exception, err:
+                        print "Errore ", err
+                        self.request.send(self.CODE_ERR)
+
+                elif command.find(self.MSG_AYPP) == 0:
+                    self.request.send(self.CODE_IMPP)
+
+                elif command.find(self.MSG_LIST) == 0:
+                    self.setActiveDir(command)
+
                 else:
-                    self.request.send(self.CODE_NF)
-
-            elif command.find(self.MSG_PAUSE) == 0:
-                try:
-                    snd.pause()
-                    self.request.send(self.CODE_OK)
-                except Exception, err:
-                    print "Errore ", err
-                    self.request.send(self.CODE_ERR)
-
-            elif command.find(self.MSG_RESUME) == 0:
-                try:
-                    snd.play()
-                    self.request.send(self.CODE_OK)
-                except Exception, err:
-                    print "Errore ", err
-                    self.request.send(self.CODE_ERR)
-
-            elif command.find(self.MSG_AYPP) == 0:
-                self.request.send(self.CODE_IMPP)
-
-            elif command.find(self.MSG_LIST) == 0:
-                self.setActiveDir(command)
-
-            else:
-                print "Unknown command: %s" % (command)
-                self.request.send(self.CODE_UNKNOWN)
+                    print "Unknown command: %s" % (command)
+                    self.request.send(self.CODE_UNKNOWN)
     
-    def startSong(self, sndobj, path):
+    def startSong(self, sndobj, command):
         sndobj.flush()
 
-        if os.path.isfile(path):
+        try:
+            ref = command.split(' ', 1)[1]
+        except Exception, err:
+            print "Error ", err
+            return 1
+
+        if os.path.isfile(ref):
             try:
                 sndobj.read(path)
             except Exception, err:
-                print "Error %s" % (err)
+                print "Error ", err
+                return 1
+        elif ref.isdigit():
+            try:
+                ref = int(ref)
+                sndobj.read(self.ActiveList[ref])
+            except Exception, err:
+                print "Error ", err
                 return 1
         else:
             return 2
         
         sndobj.play()
-        print "Now playing: %s" % (path)
+        if not isinstance(ref, int):
+            print "Now playing: ", ref
+        else:
+            print "Now playing: ", self.ActiveList[ref]
         return 0
 
     def setActiveDir(self, command):
