@@ -26,6 +26,7 @@ class MP3Server (SocketServer.TCPServer):
         SocketServer.TCPServer.serve_forever(self, poll_interval=0.5)
 
     def refreshServed(self):
+        self.ServedFiles = []
         for dir, subdir, files in os.walk(self.DocRoot):
             for f in files:
                 self.ServedFiles.append(os.path.join(dir, f))
@@ -47,12 +48,14 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_PAUSE = 'PAUSE'
     MSG_RESUME = 'RESUME'
     MSG_LIST = 'LIST'
+    MSG_SEARCH = 'SEARCH'
 
-    CODE_OK = '200 OK'
-    CODE_IMPP = '220 YES I AM'
-    CODE_NF = '404 NOT FOUND'
-    CODE_ERR = '500 ERROR'
-    CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED'
+    CODE_OK = '200 OK\n'
+    CODE_IMPP = '220 YES I AM\n'
+    CODE_NF = '404 NOT FOUND\n'
+    CODE_NOKEY = '420 NO KEY SPECIFIED\n'
+    CODE_ERR = '500 ERROR\n'
+    CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED\n'
 
     def handle(self):
         print "Got connection from ", self.client_address
@@ -94,7 +97,16 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     self.request.send(self.CODE_IMPP)
 
                 elif command.find(self.MSG_LIST) == 0:
-                    self.setActiveDir(command)
+                    if not  self.setActiveDir(command):
+                        self.request.send(self.createListMsg())
+                    else:
+                        self.request.send(self.CODE_NF)
+
+                elif command.find(self.MSG_SEARCH) == 0:
+                    if not self.setActiveSearch(command):
+                        self.request.send(self.createListMsg())
+                    else:
+                        self.request.send(self.CODE_NOKEY)
 
                 else:
                     print "Unknown command: %s" % (command)
@@ -144,20 +156,53 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         # Flushing old entries
         self.flushActive()
 
-        for entry in os.listdir(directory):
-            if os.path.isfile(os.path.join(directory, entry)):
-                self.Files.append(os.path.join(directory, entry))
-            elif os.path.isdir(os.path.join(directory, entry)):
-                self.Dirs.append(os.path.join(directory, entry))
+        if os.path.isdir(directory):
+            for entry in os.listdir(directory):
+                if os.path.isfile(os.path.join(directory, entry)):
+                    self.Files.append(os.path.join(directory, entry))
+                elif os.path.isdir(os.path.join(directory, entry)):
+                    self.Dirs.append(os.path.join(directory, entry))
+        else:
+            return 1
 
         self.Dirs.sort()
         self.Files.sort()
-        self.ActiveList = self.Dirs + self.Files        
+        self.ActiveList = self.Dirs + self.Files
 
+        return 0
+
+    def setActiveSearch(self, command):
+        try:
+            key = command.split(' ', 1)[1]
+        except Exception:
+            print "SEARCH: No key specified"
+            return 1
+
+        self.server.refreshServed()
+
+        for f in self.server.ServedFiles:
+            if f.find(key) != -1:
+                if os.path.isfile(f):
+                    self.Files.append(f)
+                elif os.path.isdir(f):
+                    self.Dirs.append(f)
+
+        self.Dirs.sort()
+        self.Files.sort()
+        self.ActiveList = self.Dirs + self.Files
+
+        return 0
+    
+    def createListMsg(self):
+        msg = self.CODE_OK
         i = 0
-        for entry in self.ActiveList:
-            print i, " - ", entry
-            i += 1
+        if self.ActiveList != []:
+            for f in self.ActiveList:
+                msg += str(i) + " - " + f + "\n"
+                i += 1
+        else:
+            msg += "No match found\n"
+        return msg
     
     def flushActive(self):
         self.Dirs = []
