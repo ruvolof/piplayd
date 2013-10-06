@@ -8,7 +8,9 @@ class MP3Server (SocketServer.TCPServer):
     AcceptedExtension = frozenset(['mp3', 'wav', 'ogg'])
     
     def __init__(self, server_address, RequestHandlerClass, SoundObj, DocRoot):
-        SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
+        SocketServer.TCPServer.__init__(self,
+                                        server_address,
+                                        RequestHandlerClass)
 
         # Setting SoundObj e DocRoot, the handler needs them
         self.SoundObj = SoundObj
