@@ -58,6 +58,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     CODE_OK = '200 OK\n'
     CODE_LISTSUCC = '210 LIST\n'
     CODE_IMPP = '250 YES I AM\n'
+    CODE_FORBIDDEN = '403 FORBIDDEN\n'
     CODE_NF = '404 NOT FOUND\n'
     CODE_NOKEY = '420 NO KEY SPECIFIED\n'
     CODE_ERR = '500 INTERNAL ERROR\n'
@@ -103,10 +104,13 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     self.request.send(self.CODE_IMPP)
 
                 elif command.find(self.MSG_LIST) == 0:
-                    if not  self.setActiveDir(command):
+                    rv = self.setActiveDir(command)
+                    if rv ==  0:
                         self.request.send(self.createListMsg())
-                    else:
+                    elif rv == 1:
                         self.request.send(self.CODE_NF)
+                    elif rv == 2:
+                        self.request.send(self.CODE_FORBIDDEN)
 
                 elif command.find(self.MSG_SEARCH) == 0:
                     if not self.setActiveSearch(command):
@@ -153,19 +157,23 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     def setActiveDir(self, command):
         # Check for argument
         try:
-            directory =  os.path.join('.', command.split(' ', 1)[1])
+            directory = os.path.join(os.getcwd(), command.split(' ', 1)[1])
         except Exception:
-            directory = '.'
+            directory = os.getcwd()
 
         # Flushing old entries
         self.flushActive()
 
         if os.path.isdir(directory):
-            for entry in os.listdir(directory):
-                if os.path.isfile(os.path.join(directory, entry)):
-                    self.Files.append(os.path.join(directory, entry))
-                elif os.path.isdir(os.path.join(directory, entry)):
-                    self.Dirs.append(os.path.join(directory, entry))
+            if self.checkIsSubdir(self.server.DocRoot, directory):
+                for entry in os.listdir(directory):
+                    if os.path.isfile(os.path.join(directory, entry)):
+                        self.Files.append(os.path.join(directory, entry))
+                    elif os.path.isdir(os.path.join(directory, entry)):
+                        self.Dirs.append(os.path.join(directory, entry))
+            else:
+                return 2
+
         else:
             return 1
 
@@ -215,3 +223,9 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         self.Dirs = []
         self.Files = []
         self.ActiveList = []
+
+    def checkIsSubdir(self, root, f):
+        r = os.path.realpath(root)
+        fp = os.path.realpath(f)
+
+        return os.path.commonprefix([r, fp]) == r
