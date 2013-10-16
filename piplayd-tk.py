@@ -3,6 +3,31 @@
 import Tkinter
 import threading
 
+class StopButton (Tkinter.Canvas):
+
+    STOP_COLOR = 'red'
+    PADDING = 5
+
+    def __init__(self, parent, width, height, command=None):
+        Tkinter.Canvas.__init__(self, parent, borderwidth = 1,
+                                relief = Tkinter.RAISED)
+
+        self.configure(width = width, height = height)
+
+        circle = (self.PADDING + 3, self.PADDING + 3,
+                  width - self.PADDING, height - self.PADDING)
+
+        self.create_oval(circle, fill = self.STOP_COLOR)
+
+        self.bind('<ButtonPress-1>', self._on_press)
+        self.bind('<ButtonRelease-1>', self._on_release)
+
+    def _on_press(self, event):
+        self.configure(relief = Tkinter.SUNKEN)
+
+    def _on_release(self, event):
+        self.configure(relief = Tkinter.RAISED)
+
 def main():
 
     DOCROOT_LABEL = 'Document root:'
@@ -13,7 +38,6 @@ def main():
     MF_HEIGHT = 150
     BUT_WIDTH = 30
     BUT_HEIGHT = 30
-    STOP_COLOR = 'red'
     START_COLOR = 'green'
 
     # Loading main window
@@ -34,13 +58,11 @@ def main():
     text_P = Tkinter.Entry(f)
     
     # Setting buttons
-    but_Stop = Tkinter.Canvas(f, width = BUT_WIDTH, height = BUT_HEIGHT)
-    ovalSize = 5, 5, BUT_WIDTH - 5, BUT_HEIGHT - 5
-    but_Stop.create_oval(ovalSize, fill = STOP_COLOR)
+    but_Stop = StopButton(f, BUT_WIDTH, BUT_HEIGHT)
     
     but_Start = Tkinter.Canvas(f, width = BUT_WIDTH, height = BUT_HEIGHT)
     triangle = 5, 5, BUT_WIDTH - 5, BUT_HEIGHT / 2, 5, BUT_HEIGHT - 5 
-    but_Start.create_polygon(triangle, fill = START_COLOR)
+    but_Start.create_polygon(triangle, fill = START_COLOR) 
     
     # Designign layout
     f.grid()
