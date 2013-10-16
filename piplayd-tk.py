@@ -3,21 +3,29 @@
 import Tkinter
 import threading
 
-class StopButton (Tkinter.Canvas):
+class ControlButton(Tkinter.Canvas):
 
     STOP_COLOR = 'red'
     PADDING = 5
+    START_COLOR = 'green'
 
-    def __init__(self, parent, width, height, command=None):
+    def __init__(self, parent, width, height, btype = None, command = None):
         Tkinter.Canvas.__init__(self, parent, borderwidth = 1,
                                 relief = Tkinter.RAISED)
 
         self.configure(width = width, height = height)
 
-        circle = (self.PADDING + 3, self.PADDING + 3,
-                  width - self.PADDING, height - self.PADDING)
+        if (btype == 'stop'):
+            circle = (self.PADDING + 3, self.PADDING + 3,
+                      width - self.PADDING, height - self.PADDING)
 
-        self.create_oval(circle, fill = self.STOP_COLOR)
+            self.create_oval(circle, fill = self.STOP_COLOR)
+        elif (btype == 'start'):
+            triangle = (self.PADDING, self.PADDING,
+                        width - self.PADDING, height / 2,
+                        self.PADDING, height - self.PADDING)
+            self.create_polygon(triangle, fill = self.START_COLOR)
+
 
         self.bind('<ButtonPress-1>', self._on_press)
         self.bind('<ButtonRelease-1>', self._on_release)
@@ -58,11 +66,8 @@ def main():
     text_P = Tkinter.Entry(f)
     
     # Setting buttons
-    but_Stop = StopButton(f, BUT_WIDTH, BUT_HEIGHT)
-    
-    but_Start = Tkinter.Canvas(f, width = BUT_WIDTH, height = BUT_HEIGHT)
-    triangle = 5, 5, BUT_WIDTH - 5, BUT_HEIGHT / 2, 5, BUT_HEIGHT - 5 
-    but_Start.create_polygon(triangle, fill = START_COLOR) 
+    but_Stop = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'stop')
+    but_Start = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'start')
     
     # Designign layout
     f.grid()
