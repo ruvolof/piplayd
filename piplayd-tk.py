@@ -2,6 +2,9 @@
 
 import Tkinter
 import threading
+import MP3Server
+import tkSnack
+import os
 
 class ControlButton(Tkinter.Canvas):
 
@@ -16,7 +19,8 @@ class ControlButton(Tkinter.Canvas):
                                 width = width,
                                 height = height)
 
-        #self.configure(width = width, height = height)
+
+        self.command = command
 
         if (btype == 'stop'):
             circle = (self.PADDING + 3, self.PADDING + 3,
@@ -41,6 +45,8 @@ class ControlButton(Tkinter.Canvas):
 
     def _on_release(self, event):
         self.configure(relief = Tkinter.RAISED)
+        self.command()
+        
 
 def main():
 
@@ -53,6 +59,9 @@ def main():
     BUT_WIDTH = 30
     BUT_HEIGHT = 30
     START_COLOR = 'green'
+    DEFAULT_PORT = '9580'
+    server = None
+    sndobj = None
 
     # Loading main window
     win = Tkinter.Tk(baseName = APPNAME)
@@ -69,12 +78,35 @@ def main():
 
     # Setting text areas
     text_DR = Tkinter.Entry(f)
+    text_DR.insert(0, os.getcwd())
     text_P = Tkinter.Entry(f)
+    text_P.insert(0, DEFAULT_PORT)
+
+    # Handlers for buttons
+    def stopServer(server):
+        server.shutdown()
+
+    def startServer():
+		global server
+		port = int(text_P.get())
+		server = MP3Server.MP3Server(('', port),
+                                     MP3Server.PlayerHandler,
+                                     sndobj,
+                                     text_DR.get())
+		server_thread = threading.Thread(target=server.serve_forever)
+		server_thread.daemon = True
+		server_thread.start()
     
     # Setting buttons
-    but_Stop = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'stop')
-    but_Start = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'start')
+    but_Stop = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'stop',
+                             command = lambda:stopServer(server))
+    but_Start = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'start',
+                              command = startServer)
     
+    # Initilizing tkSnack
+    tkSnack.initializeSnack(win)
+    sndobj = tkSnack.Sound()
+
     # Designign layout
     f.grid()
     label_DocRoot.grid(row = 1, column = 1, sticky = Tkinter.W)
