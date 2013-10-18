@@ -83,9 +83,10 @@ def main():
     text_P.insert(0, DEFAULT_PORT)
 
     # Handlers for buttons
-    def stopServer(server):
+    def stopServer():
+        global server
         server.shutdown()
-
+    
     def startServer():
 		global server
 		port = int(text_P.get())
@@ -99,7 +100,7 @@ def main():
     
     # Setting buttons
     but_Stop = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'stop',
-                             command = lambda:stopServer(server))
+                             command = stopServer)
     but_Start = ControlButton(f, BUT_WIDTH, BUT_HEIGHT, 'start',
                               command = startServer)
     
