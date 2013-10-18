@@ -8,12 +8,15 @@ class ControlButton(Tkinter.Canvas):
     STOP_COLOR = 'red'
     PADDING = 5
     START_COLOR = 'green'
+    OUTLINE_COLOR = 'black'
 
     def __init__(self, parent, width, height, btype = None, command = None):
         Tkinter.Canvas.__init__(self, parent, borderwidth = 1,
-                                relief = Tkinter.RAISED)
+                                relief = Tkinter.RAISED,
+                                width = width,
+                                height = height)
 
-        self.configure(width = width, height = height)
+        #self.configure(width = width, height = height)
 
         if (btype == 'stop'):
             circle = (self.PADDING + 3, self.PADDING + 3,
@@ -21,10 +24,13 @@ class ControlButton(Tkinter.Canvas):
 
             self.create_oval(circle, fill = self.STOP_COLOR)
         elif (btype == 'start'):
-            triangle = (self.PADDING, self.PADDING,
-                        width - self.PADDING, height / 2,
-                        self.PADDING, height - self.PADDING)
-            self.create_polygon(triangle, fill = self.START_COLOR)
+            triangle = (self.PADDING + 3, self.PADDING + 3,
+                        width - self.PADDING,
+                        height / 2 + self.PADDING / 2,
+                        self.PADDING + 3, height - self.PADDING)
+            self.create_polygon(triangle,
+								fill = self.START_COLOR,
+								outline = self.OUTLINE_COLOR)
 
 
         self.bind('<ButtonPress-1>', self._on_press)
