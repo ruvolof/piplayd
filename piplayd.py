@@ -22,7 +22,7 @@ def main():
 
     # Default values 
     port = 9580
-    docroot = os.getcwd()
+    docroot = os.getenv('HOME')
 
     # Parsing command line options
     for o, a in opts:

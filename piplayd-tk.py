@@ -78,7 +78,7 @@ def main():
 
     # Setting text areas
     text_DR = Tkinter.Entry(f)
-    text_DR.insert(0, os.getcwd())
+    text_DR.insert(0, os.getenv('HOME'))
     text_P = Tkinter.Entry(f)
     text_P.insert(0, DEFAULT_PORT)
 
