@@ -36,7 +36,7 @@ class MP3Server (SocketServer.TCPServer):
                 ext = None
                 try:
                     ext = f.rsplit('.', 1)[1]
-                except:
+                except Exception:
                     pass
                 
                 if ext != None and ext in self.AcceptedExtension:
