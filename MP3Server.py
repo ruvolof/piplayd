@@ -29,12 +29,13 @@ class MP3Server (SocketServer.TCPServer):
         SocketServer.TCPServer.serve_forever(self, poll_interval=0.5)
 
     def refreshServed(self):
+        drlen = len(self.DocRoot)
         self.ServedFiles = []
         for dir, subdir, files in os.walk(self.DocRoot):
             for f in files:
                 ext = f.rsplit('.', 1)[1]
                 if ext in self.AcceptedExtension:
-                    self.ServedFiles.append(os.path.join(dir, f))
+                    self.ServedFiles.append(os.path.join(dir[drlen:], f))
 
         self.ServedFiles.sort()
 
