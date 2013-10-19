@@ -33,8 +33,13 @@ class MP3Server (SocketServer.TCPServer):
         self.ServedFiles = []
         for dir, subdir, files in os.walk(self.DocRoot):
             for f in files:
-                ext = f.rsplit('.', 1)[1]
-                if ext in self.AcceptedExtension:
+                ext = None
+                try:
+                    ext = f.rsplit('.', 1)[1]
+                except:
+                    pass
+                
+                if ext != None and ext in self.AcceptedExtension:
                     self.ServedFiles.append(os.path.join(dir[drlen:], f))
 
         self.ServedFiles.sort()
