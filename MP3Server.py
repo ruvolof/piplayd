@@ -10,7 +10,11 @@ class MP3Server (SocketServer.TCPServer):
     def __init__(self, server_address, RequestHandlerClass, SoundObj, DocRoot):
         SocketServer.TCPServer.__init__(self,
                                         server_address,
-                                        RequestHandlerClass)
+                                        RequestHandlerClass,
+                                        bind_and_activate = False)
+        self.allow_reuse_address = True
+        self.server_bind()
+        self.server_activate()
 
         # Setting SoundObj e DocRoot, the handler needs them
         self.SoundObj = SoundObj

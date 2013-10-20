@@ -86,6 +86,7 @@ def main():
     def stopServer():
         global server
         server.shutdown()
+        del server
     
     def startServer():
 		global server
