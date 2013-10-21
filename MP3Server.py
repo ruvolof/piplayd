@@ -1,6 +1,7 @@
 import SocketServer
 import socket
 import os
+import re
 
 class MP3Server (SocketServer.TCPServer):
 
@@ -206,7 +207,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         self.server.refreshServed()
 
         for f in self.server.ServedFiles:
-            if f.find(key) != -1:
+            if re.search(key, f, re.I):
                 if os.path.isfile(f):
                     self.Files.append(f)
                 elif os.path.isdir(f):
