@@ -55,6 +55,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     Dirs = []
     Files = []
     ActiveList = []
+    ActivePlaylist = []
 
     # Constants
     MSGBUFF = 256
@@ -65,6 +66,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     MSG_RESUME = 'RESUME'
     MSG_LIST = 'LIST'
     MSG_SEARCH = 'SEARCH'
+    MSG_PLAYLIST = 'PLAYLIST'
 
     CODE_OK = '200 OK\n'
     CODE_LISTSUCC = '210 LIST\n'
@@ -89,13 +91,13 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
             # Parsing command
             if command != '':
 
-                if command.find(self.MSG_PLAY) == 0:
+                if self.checkMsg(command, self.MSG_PLAY):
                     if not self.startSong(snd, command):
                         self.request.send(self.CODE_OK)
                     else:
                         self.request.send(self.CODE_NF)
 
-                elif command.find(self.MSG_PAUSE) == 0:
+                elif self.checkMsg(command, self.MSG_PAUSE):
                     try:
                         snd.pause()
                         self.request.send(self.CODE_OK)
@@ -103,7 +105,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                         print "Errore ", err
                         self.request.send(self.CODE_ERR)
 
-                elif command.find(self.MSG_RESUME) == 0:
+                elif self.checkMsg(command, self.MSG_RESUME):
                     try:
                         snd.play()
                         self.request.send(self.CODE_OK)
@@ -111,10 +113,10 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                         print "Errore ", err
                         self.request.send(self.CODE_ERR)
 
-                elif command.find(self.MSG_AYPP) == 0:
+                elif self.checkMsg(command, self.MSG_AYPP):
                     self.request.send(self.CODE_IMPP)
 
-                elif command.find(self.MSG_LIST) == 0:
+                elif self.checkMsg(command, self.MSG_LIST):
                     rv = self.setActiveDir(command)
                     if rv ==  0:
                         self.request.send(self.createListMsg())
@@ -123,7 +125,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     elif rv == 2:
                         self.request.send(self.CODE_FORBIDDEN)
 
-                elif command.find(self.MSG_SEARCH) == 0:
+                elif self.checkMsg(command, self.MSG_SEARCH):
                     if not self.setActiveSearch(command):
                         self.request.send(self.createListMsg())
                     else:
@@ -240,3 +242,6 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         fp = os.path.realpath(f)
 
         return os.path.commonprefix([r, fp]) == r
+
+    def checkMsg(self, string, msg):
+        return re.search("^"+msg, string, re.I)
