@@ -1,7 +1,7 @@
 import SocketServer
-import socket
 import os
 import re
+import threading
 
 class MP3Server (SocketServer.TCPServer):
 
@@ -74,6 +74,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
     CODE_FORBIDDEN = '403 FORBIDDEN\n'
     CODE_NF = '404 NOT FOUND\n'
     CODE_NOKEY = '420 NO KEY SPECIFIED\n'
+    CODE_INVPL = '430 INVALID PLAYLIST\n'
     CODE_ERR = '500 INTERNAL ERROR\n'
     CODE_UNKNOWN = '505 METHOD NOT IMPLEMENTED\n'
 
@@ -131,6 +132,11 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
                     else:
                         self.request.send(self.CODE_NOKEY)
 
+                elif self.checkMsg(command, self.MSG_PLAYLIST):
+                    if self.startPlaylist(command):
+                        self.request.send(self.CODE_OK)
+                    else:
+                        self.request.send(self.CODE_INVPL)
                 else:
                     print "Unknown command: %s" % (command)
                     self.request.send(self.CODE_UNKNOWN)
@@ -232,6 +238,47 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
             msg += "No match found\n"
         return msg
     
+    def playLoop(self):
+        sound = self.server.SoundObj
+
+        for song in self.ActivePlaylist:
+            valid = False
+            sound.flush()
+            try:
+                sound.read(song)
+                valid = True
+            except Exception, err:
+                print "Error", err
+
+            if valid:
+                try:
+                    sound.play(blocking=True)
+                except Exception, err:
+                    print "Error", err
+
+
+    def startPlaylist(self, command):
+        files = 0
+        self.ActivePlaylist = []
+        args = command.split(' ');
+
+        for a in args:
+            if a.isdigit():
+                try:
+                    a = int(a)
+                    if a < len(self.ActiveList): 
+                        self.ActivePlaylist.append(self.ActiveList[a])
+                        files += 1
+                except Exception, err:
+                    print "Error", err
+
+        if files > 0:
+            pl_thread = threading.Thread(target = self.playLoop)
+            pl_thread.daemon = True
+            pl_thread.start()
+        
+        return files
+
     def flushActive(self):
         self.Dirs = []
         self.Files = []
@@ -244,4 +291,5 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
         return os.path.commonprefix([r, fp]) == r
 
     def checkMsg(self, string, msg):
-        return re.search("^"+msg, string, re.I)
+        msg = msg.rstrip()
+        return re.search(r'^%s\b' % msg, string, re.I)
