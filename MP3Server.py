@@ -252,6 +252,7 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
             if valid:
                 try:
+                    print "Now playing:", song
                     sound.play(blocking=True)
                 except Exception, err:
                     print "Error", err
@@ -274,7 +275,6 @@ class PlayerHandler (SocketServer.BaseRequestHandler):
 
         if files > 0:
             pl_thread = threading.Thread(target = self.playLoop)
-            pl_thread.daemon = True
             pl_thread.start()
         
         return files
